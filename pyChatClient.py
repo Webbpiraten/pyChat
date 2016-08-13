@@ -5,19 +5,19 @@ import select
 import queue
 import threading
 import re
-from tkinter import *
-#import tkinter as tk
+#from tkinter import *
+import tkinter as tk
 #from tkinter import PhotoImage
 
 class GUI():
     pass
 
-class Client():
+#class Client():
 #class Main(tk.Tk):
 
 
     def __init__(self):
-        #tk.Tk.__init__(self)
+        tk.Tk.__init__(self)
         self.msgOutQ = queue.Queue()
         self.msgInQ = queue.Queue()
         self.userList = []
@@ -322,11 +322,11 @@ class Client():
 
 
 if __name__ == "__main__":
-    c = Client()
+    #c = Client()
     #root = tk.tk()
     #Main(root)
-    #app = Main()
-    #app.mainloop()
+    app = Main()
+    app.mainloop()
 
 # ValueError: select.select: file descriptor cannot be a negative integer (-1), as select.select is trying to read a socket that is closed.
 # Change the file extension to ".pyw" --- this removes the command prompt in the background.
