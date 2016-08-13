@@ -1,87 +1,50 @@
 import socket
 import json
 import select
-#import time
 import queue
 import threading
 import re
-#from tkinter import *
 import tkinter as tk
 #from tkinter import PhotoImage
 
-class GUI():
-    pass
+class GUI(tk.Frame): # inherit tk.Frame...
+    
 
-#class Client():
-#class Main(tk.Tk):
-
-
-    def __init__(self):
-        tk.Tk.__init__(self)
-        self.msgOutQ = queue.Queue()
-        self.msgInQ = queue.Queue()
-        self.userList = []
-        self.nickname = "Derp"
-
-        # Tells us if we are connected to the server and if we must close the connection or not!
-        self.connectionflag = 0 
-        
-        # Tells us if we have created the client thread (see start())
-        self.clientActive = 0 
-        
-        self.disconnectButton = 0
-        
-        self.readList, self.writeList, self.rList, self.wList = [], [], [], []
-        self.clientsocket = socket.socket()
-        #self.clientsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.host = '127.0.0.0' # Server ip
-        self.port = 22 # Server port
-        self.rList.append(self.clientsocket)
-        self.wList.append(self.clientsocket)
-
-        # Used since we cannot create the same thread multiple times.
-        self.Event = threading.Event() 
-        self.shutdownEvent = threading.Event()
-        self.shutdownEvent.set()
-
-        self.inputThread = threading.Thread(target = self.start, args=(self.Event, self.shutdownEvent,))       
-        
-
-        ###########################################################################
-
-        self.root = Tk()
+    def __init__(self, parent, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        self.root = parent
         self.root.resizable(0,0)
         self.root.minsize(400, 200)
-        self.frame = Frame(self.root)
+        self.frame = tk.Frame(self.root)
 
-        self.button = Button(self.root, text="Connect", command=self.threadStart)
-        self.L1 = Label(self.root, text="Message")
+        self.button = tk.Button(self.root, text="Connect", command=self.threadStart)
+        self.L1 = tk.Label(self.root, text="Message")
         
         # Main text box
-        self.textbox = Entry(self.root, bd=5)
-        self.textarea = Text(self.root, width=30, height=20)
+        self.textbox = tk.Entry(self.root, bd=5)
+        self.textarea = tk.Text(self.root, width=30, height=20)
 
         # Nickname
-        self.textboxNickname = Entry(self.root, bd=5)
-        self.buttonNick = Button(self.root, text="Set Nickname", command=self.setNick)
+        self.textboxNickname = tk.Entry(self.root, bd=5)
+        self.buttonNick = tk.Button(self.root, text="Set Nickname", command=self.setNick)
 
         # Address
-        self.textboxAddress = Entry(self.root, bd=5)
-        self.buttonAddress = Button(self.root, text="Set Address", command=self.setAddress)
+        self.textboxAddress = tk.Entry(self.root, bd=5)
+        self.buttonAddress = tk.Button(self.root, text="Set Address", command=self.setAddress)
 
         # Port
-        self.textboxPort = Entry(self.root, bd=5)
-        self.buttonPort = Button(self.root, text="Set Port", command=self.setPort)
+        self.textboxPort = tk.Entry(self.root, bd=5)
+        self.buttonPort = tk.Button(self.root, text="Set Port", command=self.setPort)
 
         
-        self.scrollbar = Scrollbar(self.root)
+        self.scrollbar = tk.Scrollbar(self.root)
         self.textarea.config(yscrollcommand=self.scrollbar.set, state=DISABLED)
         self.scrollbar.config(command=self.textarea.yview)
 
         self.pad_x=5
         self.pad_y=5
 
-        self.users = Text(self.root, width=17, height=10)
+        self.users = tk.Text(self.root, width=17, height=10)
         self.users.config(state=DISABLED)
 
         # Messages
@@ -114,10 +77,50 @@ class GUI():
         img = PhotoImage(file='test2_icon.png') # .Gif, PPM/PGM, .PNG
         self.root.call('wm', 'iconphoto', self.root._w, img)
 
+
+class Main(tk.Frame): # inherit tk.Frame...
+
+
+    def __init__(self, parent, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+
+        self.root = GUI(parent)
+
+        self.msgOutQ = queue.Queue()
+        self.msgInQ = queue.Queue()
+        self.userList = []
+        self.nickname = "Derp"
+
+        # Tells us if we are connected to the server and if we must close the connection or not!
+        self.connectionflag = 0 
+        
+        # Tells us if we have created the client thread (see start())
+        self.clientActive = 0 
+        
+        self.disconnectButton = 0
+        
+        self.readList, self.writeList, self.rList, self.wList = [], [], [], []
+        self.clientsocket = socket.socket()
+        #self.clientsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.host = '127.0.0.0' # Server ip
+        self.port = 22 # Server port
+        self.rList.append(self.clientsocket)
+        self.wList.append(self.clientsocket)
+
+        # Used since we cannot create the same thread multiple times.
+        self.Event = threading.Event() 
+        self.shutdownEvent = threading.Event()
+        self.shutdownEvent.set()
+
+        self.inputThread = threading.Thread(target = self.start, args=(self.Event, self.shutdownEvent,))       
+        
+
         ###########################################################################
+
+        
           
         self.root.after(100, self.updateChat) # calls updateChat after 100ms
-        self.root.mainloop()
+        #self.root.mainloop()
 
     def threadStart(self):
         """ Starts the communication """
@@ -322,11 +325,9 @@ class GUI():
 
 
 if __name__ == "__main__":
-    #c = Client()
-    #root = tk.tk()
-    #Main(root)
-    app = Main()
-    app.mainloop()
+    root = tk.Tk()
+    Main(root)
+    root.mainloop()
 
 # ValueError: select.select: file descriptor cannot be a negative integer (-1), as select.select is trying to read a socket that is closed.
 # Change the file extension to ".pyw" --- this removes the command prompt in the background.
