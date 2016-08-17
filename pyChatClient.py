@@ -7,93 +7,91 @@ import re
 import tkinter as tk
 #from tkinter import PhotoImage
 
+
 class GUI(tk.Frame): # inherit tk.Frame...
     
 
-    def __init__(self, parent, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-        self.root = parent
-        self.root.resizable(0,0)
-        self.root.minsize(400, 200)
-        self.frame = tk.Frame(self.root)
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.parent = parent
 
-        self.button = tk.Button(self.root, text="Connect", command=self.threadStart)
-        self.L1 = tk.Label(self.root, text="Message")
+        self.connectbutton = tk.Button(self.parent.parent, text="Connect", command=self.parent.threadStart)
         
         # Main text box
-        self.textbox = tk.Entry(self.root, bd=5)
-        self.textarea = tk.Text(self.root, width=30, height=20)
+        self.textbox = tk.Entry(self.parent.parent, bd=5)
+        self.textarea = tk.Text(self.parent.parent, width=30, height=20)
 
         # Nickname
-        self.textboxNickname = tk.Entry(self.root, bd=5)
-        self.buttonNick = tk.Button(self.root, text="Set Nickname", command=self.setNick)
+        self.textboxNickname = tk.Entry(self.parent.parent, bd=5)
+        self.buttonNick = tk.Button(self.parent.parent, text="Set Nickname", command=self.parent.setNick)
 
         # Address
-        self.textboxAddress = tk.Entry(self.root, bd=5)
-        self.buttonAddress = tk.Button(self.root, text="Set Address", command=self.setAddress)
+        self.textboxAddress = tk.Entry(self.parent.parent, bd=5)
+        self.buttonAddress = tk.Button(self.parent.parent, text="Set Address", command=self.parent.setAddress)
 
         # Port
-        self.textboxPort = tk.Entry(self.root, bd=5)
-        self.buttonPort = tk.Button(self.root, text="Set Port", command=self.setPort)
-
-        
-        self.scrollbar = tk.Scrollbar(self.root)
-        self.textarea.config(yscrollcommand=self.scrollbar.set, state=DISABLED)
+        self.textboxPort = tk.Entry(self.parent.parent, bd=5)
+        self.buttonPort = tk.Button(self.parent.parent, text="Set Port", command=self.parent.setPort)
+ 
+        self.scrollbar = tk.Scrollbar(self.parent.parent)
+        self.textarea.config(yscrollcommand=self.scrollbar.set, state=tk.DISABLED)
         self.scrollbar.config(command=self.textarea.yview)
 
         self.pad_x=5
         self.pad_y=5
 
-        self.users = tk.Text(self.root, width=17, height=10)
-        self.users.config(state=DISABLED)
+        self.users = tk.Text(self.parent.parent, width=17, height=10)
+        self.users.config(state=tk.DISABLED)
 
         # Messages
-        self.textarea.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y, sticky=W)
+        self.textarea.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
         self.scrollbar.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y, sticky='ns')
-        self.textbox.grid(row=1, column=1, padx=self.pad_x, pady=self.pad_y, sticky=W)
+        self.textbox.grid(row=1, column=1, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
         # Connecting
-        self.button.grid(row=1, column=2, padx=self.pad_x, pady=self.pad_y, sticky=W)
+        self.connectbutton.grid(row=1, column=2, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
         # Users
-        self.users.grid(row=0,column=4,padx=self.pad_x, pady=self.pad_y, sticky=W)
+        self.users.grid(row=0,column=4,padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
         #Nickname
-        self.buttonNick.grid(row=1, column=4, padx=self.pad_x, pady=self.pad_y, sticky=W)
-        self.textboxNickname.grid(row=1, column=3, padx=self.pad_x, pady=self.pad_y, sticky=W)
+        self.buttonNick.grid(row=1, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        self.textboxNickname.grid(row=1, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
         #Address
-        self.buttonAddress.grid(row=2, column=4, padx=self.pad_x, pady=self.pad_y, sticky=W)
-        self.textboxAddress.grid(row=2, column=3, padx=self.pad_x, pady=self.pad_y, sticky=W)
+        self.buttonAddress.grid(row=2, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        self.textboxAddress.grid(row=2, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
         #Port
-        self.buttonPort.grid(row=3, column=4, padx=self.pad_x, pady=self.pad_y, sticky=W)
-        self.textboxPort.grid(row=3, column=3, padx=self.pad_x, pady=self.pad_y, sticky=W)
+        self.buttonPort.grid(row=3, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        self.textboxPort.grid(row=3, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
-        self.root.bind("<Return>", lambda x: self.addChat())
-        self.root.protocol('WM_DELETE_WINDOW', self.exitChat)
-        self.root.wm_title("pyChat")
+        self.parent.parent.bind("<Return>", lambda x: self.parent.addChat)
+        self.parent.parent.protocol('WM_DELETE_WINDOW', self.parent.exitChat)
+        self.parent.parent.wm_title("pyChat")
 
-        img = PhotoImage(file='test2_icon.png') # .Gif, PPM/PGM, .PNG
-        self.root.call('wm', 'iconphoto', self.root._w, img)
+        img = tk.PhotoImage(file='test2_icon.png') # .Gif, PPM/PGM, .PNG
+        self.parent.parent.call('wm', 'iconphoto', self.parent.parent._w, img)
 
 
 class Main(tk.Frame): # inherit tk.Frame...
 
 
-    def __init__(self, parent, *args, **kwargs):
-        tk.Frame.__init__(self, parent, *args, **kwargs)
-
-        self.root = GUI(parent)
+    def __init__(self, parent):
+        tk.Frame.__init__(self, parent)
+        self.parent = parent
+        self.gui = GUI(self)
 
         self.msgOutQ = queue.Queue()
         self.msgInQ = queue.Queue()
         self.userList = []
-        self.nickname = "Derp"
+        self.nickname = None
+        self.host = None # Server ip
+        self.port = None # Server port
+        self.canconnect = 0
 
         # Tells us if we are connected to the server and if we must close the connection or not!
         self.connectionflag = 0 
-        
         # Tells us if we have created the client thread (see start())
         self.clientActive = 0 
         
@@ -102,8 +100,7 @@ class Main(tk.Frame): # inherit tk.Frame...
         self.readList, self.writeList, self.rList, self.wList = [], [], [], []
         self.clientsocket = socket.socket()
         #self.clientsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.host = '127.0.0.0' # Server ip
-        self.port = 22 # Server port
+
         self.rList.append(self.clientsocket)
         self.wList.append(self.clientsocket)
 
@@ -112,25 +109,20 @@ class Main(tk.Frame): # inherit tk.Frame...
         self.shutdownEvent = threading.Event()
         self.shutdownEvent.set()
 
-        self.inputThread = threading.Thread(target = self.start, args=(self.Event, self.shutdownEvent,))       
-        
-
-        ###########################################################################
-
-        
-          
-        self.root.after(100, self.updateChat) # calls updateChat after 100ms
-        #self.root.mainloop()
+        self.inputThread = threading.Thread(target = self.start, args=(self.Event, self.shutdownEvent,))                 
+        self.parent.after(100, self.updateChat) # calls updateChat after 100ms
 
     def threadStart(self):
         """ Starts the communication """
-
-        if not self.clientActive:
-            self.inputThread.start() # start() can only be used ONCE!
-            self.clientActive = 1
+        if self.host and self.port and self.nickname:
+            if not self.clientActive:
+                self.inputThread.start() # start() can only be used ONCE!
+                self.clientActive = 1
+            else:
+                print("self.Event.set()")
+                self.Event.set()
         else:
-            print("self.Event.set()")
-            self.Event.set()
+            print("Please fill in all credentials!")
 
     def disconnectButtonChat(self):
         if self.connectionflag:
@@ -161,21 +153,21 @@ class Main(tk.Frame): # inherit tk.Frame...
             # Otherwise when we press Connect again, it tries to start a new thread, which we cannot do.
             self.clientActive = 1
 
-            self.button.config(text="Connect", command=self.threadStart)
+            self.gui.connectbutton.config(text="Connect", command=self.threadStart)
 
-            self.textarea.config(state=NORMAL)
-            self.textarea.delete('1.0', END)
-            self.textarea.config(state=DISABLED)
+            self.gui.textarea.config(state=tk.NORMAL)
+            self.gui.textarea.delete('1.0', tk.END)
+            self.gui.textarea.config(state=tk.DISABLED)
 
-            self.users.config(state=NORMAL)
-            self.users.delete('1.0', END)
-            self.users.config(state=DISABLED)
+            self.gui.users.config(state=tk.NORMAL)
+            self.gui.users.delete('1.0', tk.END)
+            self.gui.users.config(state=tk.DISABLED)
 
-            self.buttonAddress.config(state=NORMAL)
-            self.textboxAddress.config(state=NORMAL)
+            self.gui.buttonAddress.config(state=tk.NORMAL)
+            self.gui.textboxAddress.config(state=tk.NORMAL)
 
-            self.buttonPort.config(state=NORMAL)
-            self.textboxPort.config(state=NORMAL)
+            self.gui.buttonPort.config(state=tk.NORMAL)
+            self.gui.textboxPort.config(state=tk.NORMAL)
 
     def exitChat(self):
         """ Send a shutdown message to the server so it can remove it from the clientList """
@@ -189,64 +181,70 @@ class Main(tk.Frame): # inherit tk.Frame...
             self.clientsocket.shutdown(socket.SHUT_RDWR)
             self.clientsocket.close()
             self.shutdownEvent.clear()
-            self.root.destroy()
+            self.parent.destroy()
 
         else:
             print("exitChat")
             self.shutdownEvent.clear()
-            self.root.destroy()
+            self.parent.destroy()
 
     def updateChat(self):
         """ Updates the chat room """
 
         if not self.msgInQ.empty():
             message = self.msgInQ.get()
-            self.textarea.config(state=NORMAL)
-            self.textarea.insert(END, message['nick'] + ": " + message['data'] + "\n") ##json.loads(self.msgInQ.get().decode('utf-8'))['data'] + "\n") #
-            self.textarea.see(END)
-            self.textarea.config(state=DISABLED)
-        self.root.after(100, self.updateChat)
+            self.gui.textarea.config(state=tk.NORMAL)
+            self.gui.textarea.insert(tk.END, message['nick'] + ": " + message['data'] + "\n") ##json.loads(self.msgInQ.get().decode('utf-8'))['data'] + "\n") #
+            self.gui.textarea.see(tk.END)
+            self.gui.textarea.config(state=tk.DISABLED)
+        self.parent.after(100, self.updateChat)
 
     def addChat(self):
         """ Adds text that the client is writing to the chat room. """
 
         if self.connectionflag:
             text = self.textbox.get()
-            self.textarea.config(state=NORMAL)
-            self.textarea.insert(END, self.nickname + ": "+text+"\n")
-            self.textarea.config(state=DISABLED)
-            self.textarea.see(END)
+            self.gui.textarea.config(state=tk.NORMAL)
+            self.gui.textarea.insert(END, self.nickname + ": "+text+"\n")
+            self.gui.textarea.config(state=tk.DISABLED)
+            self.gui.textarea.see(tk.END)
             msg = json.dumps({'addr': self.host, 'port': self.port, 'data': text, 'nick': self.nickname })+"\n"
             self.msgOutQ.put(msg)
-            self.textbox.delete(0, END)
+            self.gui.textbox.delete(0, tk.END)
 
     def setNick(self):
-        text = self.textboxNickname.get()
+        text = self.gui.textboxNickname.get()
         if text:
             self.nickname = text
-            self.buttonNick.config(state=DISABLED)
-            self.textboxNickname.config(state=DISABLED)
+            self.gui.buttonNick.config(state=tk.DISABLED)
+            self.gui.textboxNickname.config(state=tk.DISABLED)
         else:
-            print("Please enter a nickname")
+            print("Please enter a nickname!")
 
     def setAddress(self):
-        adr = self.textboxAddress.get()
-        self.host = adr
-        self.buttonAddress.config(state=DISABLED)
-        self.textboxAddress.config(state=DISABLED)
+        adr = self.gui.textboxAddress.get()
+        if not adr:
+            print("Please enter an address!")
+        else:
+            self.host = adr
+            self.gui.buttonAddress.config(state=tk.DISABLED)
+            self.gui.textboxAddress.config(state=tk.DISABLED)
 
     def setPort(self):
-        port = self.textboxPort.get()
-        self.port = int(port)
-        self.buttonPort.config(state=DISABLED)
-        self.textboxPort.config(state=DISABLED)
+        port = self.gui.textboxPort.get()
+        if not port:
+            print("Please enter a port!")
+        else:
+            self.port = int(port)
+            self.gui.buttonPort.config(state=tk.DISABLED)
+            self.gui.textboxPort.config(state=tk.DISABLED)
 
     def showConnectedUsers(self):
-        self.users.config(state=NORMAL)
-        self.users.delete('0.0', END)
+        self.gui.users.config(state=tk.NORMAL)
+        self.gui.users.delete('0.0', tk.END)
         for i in range(len(self.userList)): # ('host', port):Nickname
-            self.users.insert(END,list(self.userList[i].values())[0]+"\n")
-        self.users.config(state=DISABLED)
+            self.gui.users.insert(tk.END,list(self.userList[i].values())[0]+"\n")
+        self.gui.users.config(state=tk.DISABLED)
 
     # Separate Thread!
     def start(self, ev, shutdownEvent):
@@ -257,10 +255,10 @@ class Main(tk.Frame): # inherit tk.Frame...
         while shutdownEvent.is_set():
             while connection is None:
                 try:
-                    self.textarea.config(state=NORMAL)
-                    self.textarea.insert(END, "Connecting!\n")
-                    self.textarea.see(END)
-                    self.textarea.config(state=DISABLED)
+                    self.gui.textarea.config(state=tk.NORMAL)
+                    self.gui.textarea.insert(tk.END, "Connecting!\n")
+                    self.gui.textarea.see(tk.END)
+                    self.gui.textarea.config(state=tk.DISABLED)
                     self.clientsocket.connect((self.host, self.port))
                     #print(self.clientsocket.getsockname())
                     self.connectionflag = 1
@@ -269,15 +267,15 @@ class Main(tk.Frame): # inherit tk.Frame...
                     self.userList = json.loads(self.clientsocket.recv(1024).decode('utf-8')) # Gets the current chat rooms users
                     self.showConnectedUsers()
                     connection = 1
-                    self.button.config(state=NORMAL)
-                    self.button.config(text="Disconnect", command= self.disconnectButtonChat)
+                    self.gui.connectbutton.config(state=tk.NORMAL)
+                    self.gui.connectbutton.config(text="Disconnect", command= self.disconnectButtonChat)
                 except ConnectionRefusedError:
-                    self.textarea.config(state=NORMAL)
-                    self.textarea.insert(END, "Connection could not be made!\n")
-                    self.textarea.see(END)
-                    self.textarea.config(state=DISABLED)
-                    self.button.config(state=NORMAL)
-                    self.button.config(text="Connect")
+                    self.gui.textarea.config(state=tk.NORMAL)
+                    self.gui.textarea.insert(tk.END, "Connection could not be made!\n")
+                    self.gui.textarea.see(tk.END)
+                    self.gui.textarea.config(state=tk.DISABLED)
+                    self.gui.connectbutton.config(state=tk.NORMAL)
+                    self.gui.connectbutton.config(text="Connect")
                     connection = None
                     ev.wait() # Waits until Event.set() is called (makes the flag True)
                     ev.clear() # (makes the flag False´, Events are per default falsey)
@@ -324,8 +322,11 @@ class Main(tk.Frame): # inherit tk.Frame...
         return
 
 
+
 if __name__ == "__main__":
     root = tk.Tk()
+    root.resizable(0,0)
+    root.minsize(400, 200)
     Main(root)
     root.mainloop()
 
