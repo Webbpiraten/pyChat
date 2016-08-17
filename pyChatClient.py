@@ -6,6 +6,14 @@ import threading
 import re
 import tkinter as tk
 
+#class TopWinow(tk.Frame):
+#
+#
+#    def __init__(self, parent):
+#        tk.Frame.__init__(self, parent)
+#        self.parent = parent
+
+
 
 class GUI(tk.Frame):
     
@@ -36,6 +44,7 @@ class GUI(tk.Frame):
         self.serverpulldownmenu.add_command(label="Disconnect", command=self.parent.disconnectButtonChat)
         self.menubar.add_cascade(label="Server", menu=self.serverpulldownmenu)
         self.serverpulldownmenu.entryconfig("Disconnect", state="disabled")
+        self.parent.parent.config(menu=self.menubar)
 
         # Messages
         self.textarea.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
@@ -44,8 +53,6 @@ class GUI(tk.Frame):
         # Users
         self.users.grid(row=0,column=4,padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
-        self.parent.parent.config(menu=self.menubar)
-
         self.parent.parent.bind('<Return>', lambda x: self.parent.addChat())
         self.parent.parent.bind("<Escape>", lambda x: self.parent.exitChat())
         self.parent.parent.protocol('WM_DELETE_WINDOW', self.parent.exitChat)
@@ -53,7 +60,7 @@ class GUI(tk.Frame):
         img = tk.PhotoImage(file='test2_icon.png') # .Gif, PPM/PGM, .PNG
         self.parent.parent.call('wm', 'iconphoto', self.parent.parent._w, img)
 
-    def newconnectwindow(self):
+    def newconnectwindow(self): # New class?
 
         self.connecttop = tk.Toplevel()
         self.connecttop.title("Connect")
@@ -81,6 +88,7 @@ class GUI(tk.Frame):
         self.textboxPort.grid(row=2, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
         self.connectbutton.grid(row=3, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        self.connecttop.resizable(0,0)
 
 class Main(tk.Frame):
 
@@ -95,16 +103,15 @@ class Main(tk.Frame):
         self.userList = []
 
         self.nickname = None
-        self.host = None # Server ip
-        self.port = None # Server port
+        self.host = None
+        self.port = None
 
         # Tells us if we are connected to the server and if we must close the connection or not!
-        self.connectionflag = 0 
+        self.gotConnection = 0 
         # Tells us if we have created the client thread (see start())
-        self.clientActive = 0 
-        
+        self.threadActive = 0 
         # Since start() can only be used ONCE!
-        self.disconnectButton = 0
+        self.disconnectedflag = 0
         
         self.readList, self.writeList, self.rList, self.wList = [], [], [], []
         self.clientsocket = socket.socket()
@@ -127,9 +134,9 @@ class Main(tk.Frame):
     def threadStart(self):
         """ Starts the communication """
         if self.host and self.port and self.nickname:
-            if not self.clientActive:
+            if not self.threadActive:
                 self.inputThread.start() # start() can only be used ONCE!
-                self.clientActive = 1
+                self.threadActive = 1
                 self.gui.connecttop.destroy()
             else:
                 print("self.Event.set()")
@@ -139,14 +146,14 @@ class Main(tk.Frame):
             print("Please fill in all credentials!")
 
     def disconnectButtonChat(self):
-        if self.connectionflag:
+        if self.gotConnection:
 
             host = self.clientsocket.getsockname() # A List
             tuplehost = str(tuple(host))
 
             self.clientsocket.send(("\n" + json.dumps(tuplehost)+"\n").encode('utf-8'))
-            self.disconnectButton = 1
-            self.connectionflag = 0
+            self.disconnectedflag = 1
+            self.gotConnection = 0
 
             self.clientsocket.shutdown(socket.SHUT_RDWR)
 
@@ -165,7 +172,7 @@ class Main(tk.Frame):
             self.wList.append(self.clientsocket)
 
             # Otherwise when we press Connect again, it tries to start a new thread, which we cannot do.
-            self.clientActive = 1
+            self.threadActive = 1
 
             #self.gui.connectbutton.config(text="Connect", command=self.threadStart)
 
@@ -188,12 +195,12 @@ class Main(tk.Frame):
     def exitChat(self):
         """ Send a shutdown message to the server so it can remove it from the clientList """
 
-        if self.connectionflag:
+        if self.gotConnection:
             host = self.clientsocket.getsockname() # A List
             tuplehost = str(tuple(host))
 
             self.clientsocket.send(("\n" + json.dumps(tuplehost) + "\n").encode('utf-8'))
-            self.clientActive = 0 # Otherwise we get ValueError: select.select: file descriptor cannot be a negative integer (-1), as select.select is trying to read a socket that is closed.
+            self.threadActive = 0 # Otherwise we get ValueError: select.select: file descriptor cannot be a negative integer (-1), as select.select is trying to read a socket that is closed.
             self.clientsocket.shutdown(socket.SHUT_RDWR)
             self.clientsocket.close()
             self.shutdownEvent.clear()
@@ -218,7 +225,7 @@ class Main(tk.Frame):
     def addChat(self):
         """ Adds text that the client is writing to the chat room. """
 
-        if self.connectionflag:
+        if self.gotConnection:
             text = self.gui.textbox.get()
             self.gui.textarea.config(state=tk.NORMAL)
             self.gui.textarea.insert(tk.END, self.nickname + ": "+text+"\n")
@@ -277,8 +284,8 @@ class Main(tk.Frame):
                     self.gui.textarea.config(state=tk.DISABLED)
                     self.clientsocket.connect((self.host, self.port))
                     #print(self.clientsocket.getsockname())
-                    self.connectionflag = 1
-                    self.clientActive = 1
+                    self.gotConnection = 1
+                    self.threadActive = 1
                     self.clientsocket.send((json.dumps(self.nickname)+"\n").encode('utf-8')) # Send Nickname
                     self.userList = json.loads(self.clientsocket.recv(1024).decode('utf-8')) # Gets the current chat rooms users
                     self.showConnectedUsers()
@@ -287,6 +294,7 @@ class Main(tk.Frame):
                     #self.gui.connectbutton.config(text="Disconnect", command= self.disconnectButtonChat)
                     self.gui.serverpulldownmenu.entryconfig("Connect", state="disabled")
                     self.gui.serverpulldownmenu.entryconfig("Disconnect", state="normal")
+                    self.gui.textarea.insert(tk.END, "Connected!\n")
                 except ConnectionRefusedError:
                     self.gui.textarea.config(state=tk.NORMAL)
                     self.gui.textarea.insert(tk.END, "Connection could not be made!\n")
@@ -300,8 +308,8 @@ class Main(tk.Frame):
                     ev.wait() # Waits until Event.set() is called (makes the flag True)
                     ev.clear() # (makes the flag False´, Events are per default falsey)
 
-            while self.connectionflag:
-                if self.connectionflag:
+            while self.gotConnection:
+                if self.gotConnection:
                     self.readList, self.writeList, [] = select.select(self.rList, self.wList, [], 0) # select.select(rList, wList, [], timeout=0 -> Never blocks!)
 
                     while not self.msgOutQ.empty():
@@ -334,8 +342,8 @@ class Main(tk.Frame):
                         except:
                             print("Error!")
 
-            if self.disconnectButton:
-                self.connectionflag = 0
+            if self.disconnectedflag:
+                self.gotConnection = 0
                 connection = None
                 ev.wait() # When the disconnect button is pressed, the thread waits here.
                 ev.clear()
