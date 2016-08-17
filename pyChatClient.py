@@ -5,10 +5,9 @@ import queue
 import threading
 import re
 import tkinter as tk
-#from tkinter import PhotoImage
 
 
-class GUI(tk.Frame): # inherit tk.Frame...
+class GUI(tk.Frame):
     
 
     def __init__(self, parent):
@@ -65,16 +64,16 @@ class GUI(tk.Frame): # inherit tk.Frame...
         #Port
         self.buttonPort.grid(row=3, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
         self.textboxPort.grid(row=3, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
-
-        self.parent.parent.bind("<Return>", lambda x: self.parent.addChat)
+        #print(type(self.parent.parent))
+        self.parent.parent.bind('<Return>', lambda x: self.parent.addChat())
+        self.parent.parent.bind("<Escape>", lambda x: self.parent.exitChat())
         self.parent.parent.protocol('WM_DELETE_WINDOW', self.parent.exitChat)
         self.parent.parent.wm_title("pyChat")
-
         img = tk.PhotoImage(file='test2_icon.png') # .Gif, PPM/PGM, .PNG
         self.parent.parent.call('wm', 'iconphoto', self.parent.parent._w, img)
 
 
-class Main(tk.Frame): # inherit tk.Frame...
+class Main(tk.Frame):
 
 
     def __init__(self, parent):
@@ -85,16 +84,17 @@ class Main(tk.Frame): # inherit tk.Frame...
         self.msgOutQ = queue.Queue()
         self.msgInQ = queue.Queue()
         self.userList = []
+
         self.nickname = None
         self.host = None # Server ip
         self.port = None # Server port
-        self.canconnect = 0
 
         # Tells us if we are connected to the server and if we must close the connection or not!
         self.connectionflag = 0 
         # Tells us if we have created the client thread (see start())
         self.clientActive = 0 
         
+        # Since start() can only be used ONCE!
         self.disconnectButton = 0
         
         self.readList, self.writeList, self.rList, self.wList = [], [], [], []
@@ -111,6 +111,9 @@ class Main(tk.Frame): # inherit tk.Frame...
 
         self.inputThread = threading.Thread(target = self.start, args=(self.Event, self.shutdownEvent,))                 
         self.parent.after(100, self.updateChat) # calls updateChat after 100ms
+
+    def testPrint(self):
+        print("Derp!")
 
     def threadStart(self):
         """ Starts the communication """
@@ -203,9 +206,9 @@ class Main(tk.Frame): # inherit tk.Frame...
         """ Adds text that the client is writing to the chat room. """
 
         if self.connectionflag:
-            text = self.textbox.get()
+            text = self.gui.textbox.get()
             self.gui.textarea.config(state=tk.NORMAL)
-            self.gui.textarea.insert(END, self.nickname + ": "+text+"\n")
+            self.gui.textarea.insert(tk.END, self.nickname + ": "+text+"\n")
             self.gui.textarea.config(state=tk.DISABLED)
             self.gui.textarea.see(tk.END)
             msg = json.dumps({'addr': self.host, 'port': self.port, 'data': text, 'nick': self.nickname })+"\n"
