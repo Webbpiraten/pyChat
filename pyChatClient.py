@@ -14,23 +14,9 @@ class GUI(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
 
-        self.connectbutton = tk.Button(self.parent.parent, text="Connect", command=self.parent.threadStart)
-        
         # Main text box
         self.textbox = tk.Entry(self.parent.parent, bd=5)
         self.textarea = tk.Text(self.parent.parent, width=30, height=20)
-
-        # Nickname
-        self.textboxNickname = tk.Entry(self.parent.parent, bd=5)
-        self.buttonNick = tk.Button(self.parent.parent, text="Set Nickname", command=self.parent.setNick)
-
-        # Address
-        self.textboxAddress = tk.Entry(self.parent.parent, bd=5)
-        self.buttonAddress = tk.Button(self.parent.parent, text="Set Address", command=self.parent.setAddress)
-
-        # Port
-        self.textboxPort = tk.Entry(self.parent.parent, bd=5)
-        self.buttonPort = tk.Button(self.parent.parent, text="Set Port", command=self.parent.setPort)
  
         self.scrollbar = tk.Scrollbar(self.parent.parent)
         self.textarea.config(yscrollcommand=self.scrollbar.set, state=tk.DISABLED)
@@ -39,32 +25,27 @@ class GUI(tk.Frame):
         self.pad_x=5
         self.pad_y=5
 
+        # User list
         self.users = tk.Text(self.parent.parent, width=17, height=10)
         self.users.config(state=tk.DISABLED)
+
+        # Menu
+        self.menubar = tk.Menu(self.parent.parent)
+        self.serverpulldownmenu = tk.Menu(self.menubar, tearoff=0) # tearoff: dashed line ------
+        self.serverpulldownmenu.add_command(label="Connect", command=self.newconnectwindow)
+        self.serverpulldownmenu.add_command(label="Disconnect", command=self.parent.disconnectButtonChat)
+        self.menubar.add_cascade(label="Server", menu=self.serverpulldownmenu)
+        self.serverpulldownmenu.entryconfig("Disconnect", state="disabled")
 
         # Messages
         self.textarea.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
         self.scrollbar.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y, sticky='ns')
         self.textbox.grid(row=1, column=1, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
-
-        # Connecting
-        self.connectbutton.grid(row=1, column=2, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
-
         # Users
         self.users.grid(row=0,column=4,padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
-        #Nickname
-        self.buttonNick.grid(row=1, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
-        self.textboxNickname.grid(row=1, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        self.parent.parent.config(menu=self.menubar)
 
-        #Address
-        self.buttonAddress.grid(row=2, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
-        self.textboxAddress.grid(row=2, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
-
-        #Port
-        self.buttonPort.grid(row=3, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
-        self.textboxPort.grid(row=3, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
-        #print(type(self.parent.parent))
         self.parent.parent.bind('<Return>', lambda x: self.parent.addChat())
         self.parent.parent.bind("<Escape>", lambda x: self.parent.exitChat())
         self.parent.parent.protocol('WM_DELETE_WINDOW', self.parent.exitChat)
@@ -72,6 +53,34 @@ class GUI(tk.Frame):
         img = tk.PhotoImage(file='test2_icon.png') # .Gif, PPM/PGM, .PNG
         self.parent.parent.call('wm', 'iconphoto', self.parent.parent._w, img)
 
+    def newconnectwindow(self):
+
+        self.connecttop = tk.Toplevel()
+        self.connecttop.title("Connect")
+
+        self.connectbutton = tk.Button(self.connecttop, text="Connect", command=self.parent.threadStart)
+
+        # Nickname
+        self.textboxNickname = tk.Entry(self.connecttop, bd=5)
+        self.buttonNick = tk.Button(self.connecttop, text="Set Nickname", command=self.parent.setNick)
+        # Address
+        self.textboxAddress = tk.Entry(self.connecttop, bd=5)
+        self.buttonAddress = tk.Button(self.connecttop, text="Set Address", command=self.parent.setAddress)
+        # Port
+        self.textboxPort = tk.Entry(self.connecttop, bd=5)
+        self.buttonPort = tk.Button(self.connecttop, text="Set Port", command=self.parent.setPort)
+
+        # Nickname
+        self.buttonNick.grid(row=0, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        self.textboxNickname.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        # Address
+        self.buttonAddress.grid(row=1, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        self.textboxAddress.grid(row=1, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        # Port
+        self.buttonPort.grid(row=2, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+        self.textboxPort.grid(row=2, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
+
+        self.connectbutton.grid(row=3, column=4, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
 
 class Main(tk.Frame):
 
@@ -121,9 +130,11 @@ class Main(tk.Frame):
             if not self.clientActive:
                 self.inputThread.start() # start() can only be used ONCE!
                 self.clientActive = 1
+                self.gui.connecttop.destroy()
             else:
                 print("self.Event.set()")
                 self.Event.set()
+                self.gui.connecttop.destroy()
         else:
             print("Please fill in all credentials!")
 
@@ -156,7 +167,7 @@ class Main(tk.Frame):
             # Otherwise when we press Connect again, it tries to start a new thread, which we cannot do.
             self.clientActive = 1
 
-            self.gui.connectbutton.config(text="Connect", command=self.threadStart)
+            #self.gui.connectbutton.config(text="Connect", command=self.threadStart)
 
             self.gui.textarea.config(state=tk.NORMAL)
             self.gui.textarea.delete('1.0', tk.END)
@@ -166,11 +177,13 @@ class Main(tk.Frame):
             self.gui.users.delete('1.0', tk.END)
             self.gui.users.config(state=tk.DISABLED)
 
-            self.gui.buttonAddress.config(state=tk.NORMAL)
-            self.gui.textboxAddress.config(state=tk.NORMAL)
+            #self.gui.buttonAddress.config(state=tk.NORMAL)
+            #self.gui.textboxAddress.config(state=tk.NORMAL)
 
-            self.gui.buttonPort.config(state=tk.NORMAL)
-            self.gui.textboxPort.config(state=tk.NORMAL)
+            #self.gui.buttonPort.config(state=tk.NORMAL)
+            #self.gui.textboxPort.config(state=tk.NORMAL)
+            self.gui.serverpulldownmenu.entryconfig("Connect", state="normal") # Connect
+            self.gui.serverpulldownmenu.entryconfig("Disconnect", state="disabled") # Disconnect
 
     def exitChat(self):
         """ Send a shutdown message to the server so it can remove it from the clientList """
@@ -270,15 +283,19 @@ class Main(tk.Frame):
                     self.userList = json.loads(self.clientsocket.recv(1024).decode('utf-8')) # Gets the current chat rooms users
                     self.showConnectedUsers()
                     connection = 1
-                    self.gui.connectbutton.config(state=tk.NORMAL)
-                    self.gui.connectbutton.config(text="Disconnect", command= self.disconnectButtonChat)
+                    #self.gui.connectbutton.config(state=tk.NORMAL)
+                    #self.gui.connectbutton.config(text="Disconnect", command= self.disconnectButtonChat)
+                    self.gui.serverpulldownmenu.entryconfig("Connect", state="disabled")
+                    self.gui.serverpulldownmenu.entryconfig("Disconnect", state="normal")
                 except ConnectionRefusedError:
                     self.gui.textarea.config(state=tk.NORMAL)
                     self.gui.textarea.insert(tk.END, "Connection could not be made!\n")
                     self.gui.textarea.see(tk.END)
                     self.gui.textarea.config(state=tk.DISABLED)
-                    self.gui.connectbutton.config(state=tk.NORMAL)
-                    self.gui.connectbutton.config(text="Connect")
+                    #self.gui.connectbutton.config(state=tk.NORMAL)
+                    #self.gui.connectbutton.config(text="Connect")
+                    self.gui.serverpulldownmenu.entryconfig("Disconnect", state="disabled")
+                    self.gui.serverpulldownmenu.entryconfig("Connect", state="normal")
                     connection = None
                     ev.wait() # Waits until Event.set() is called (makes the flag True)
                     ev.clear() # (makes the flag False´, Events are per default falsey)
