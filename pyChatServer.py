@@ -6,6 +6,7 @@ import re
 
 class Server:
 
+
         def __init__(self):
                 self.readList, self.writeList, self.rList, self.wList = [], [], [], []
                 self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -133,7 +134,7 @@ class Server:
                                                 
 s = Server()
 
-# Vid FEL i select.select: file descriptor cannot be a negative integer (-1) -> anslutningen till den Socket är stängd, så vi försöker läsa/skriva på den.
+# Vid FEL i select.select: file descriptor cannot be a negative integer (-1) -> anslutningen till den Socket är closed, så vi försöker read/write on it.
 # Kolla in Events
 # dumps -> object      into Json string
 # loads -> Json string into object

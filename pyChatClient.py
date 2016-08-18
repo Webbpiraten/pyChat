@@ -6,7 +6,7 @@ import threading
 import re
 import tkinter as tk
 
-#class TopWinow(tk.Frame):
+#class ConWinow(tk.Frame):
 #
 #
 #    def __init__(self, parent):
