@@ -21,7 +21,12 @@ class Server:
                 self.socketList = []
                 self.socketList.append(self.serversocket)
                 self.server()
-        
+
+        # Message types? message, newConnection, shutdown, heartbeat ?
+        # message:  {"msg":   0, "nick":nick, "adr": adr, "port":port, "data":data}
+        # newCon:   {"newC":  0, "nick":nick, "adr": adr, "port":port}
+        # shutdown: {"shutd": 0, "adr": adr,  "port":port}
+        # heartb:   {"heartb":0, "adr": adr,  "port":port}
         def server(self):
                 print("Listening for connections!")
                 while True:
@@ -54,16 +59,14 @@ class Server:
                                                         print(data)
 
 
-                                                        connectionClosedMessage = re.search('\n(.*?)\n',data.decode('utf-8')) # separates by \n and \n, is nothing is found -> return NONE
+                                                        connectionClosedMessage = re.search('\n(.*?)\n', data.decode('utf-8')) # separates by \n and \n, is nothing is found -> return NONE
                                                         if connectionClosedMessage:
                                                                 print("User left the channel!")
                                                                 for Dict in self.clientList:
                                                                         #print(Dict)
                                                                         if Dict[json.loads(connectionClosedMessage.group(1))]:
+                                                                                # Send Response to the client?
                                                                                 self.clientList.remove(Dict)
-                                                                #print(self.clientList)
-                                                                #print(self.socketList)
-
                                                         else:
                                                                 self.sendMsg(data, socket)
                                                         
@@ -131,8 +134,9 @@ class Server:
                                                 self.socketList.remove(socket)
                                                 self.updateUserlist(socket)
 
-                                                
-s = Server()
+  
+if __name__ == "__main__":                                              
+        s = Server()
 
 # Vid FEL i select.select: file descriptor cannot be a negative integer (-1) -> anslutningen till den Socket är closed, så vi försöker read/write on it.
 # Kolla in Events
