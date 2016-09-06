@@ -5,6 +5,7 @@ import queue
 import threading
 import re
 import tkinter as tk
+import uuid
 
 #class ConWinow(tk.Frame):
 #
@@ -71,6 +72,7 @@ class GUI(tk.Frame):
 
         self.connecttop = tk.Toplevel()
         self.connecttop.title("Connect")
+        #self.connecttop.grab_set()
 
         self.connectbutton = tk.Button(self.connecttop, text="Connect", command=self.parent.chatInit)
 
@@ -104,6 +106,8 @@ class GUI(tk.Frame):
 
         self.connectbutton.grid(row=3, column=3, padx=self.pad_x, pady=self.pad_y, sticky=tk.W)
         self.connecttop.resizable(0,0)
+        #self.connecttop.grab_release()
+        #self.connecttop.wm_attributes("-topmost", 1) # Ontop
 
 class Main(tk.Frame):
 
@@ -112,6 +116,8 @@ class Main(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.parent = parent
         self.gui = GUI(self)
+        self.clientid = str(uuid.uuid4())
+        self.serverid = None
 
         self.msgOutQ = queue.Queue()
         self.msgInQ = queue.Queue()
@@ -170,11 +176,12 @@ class Main(tk.Frame):
             host = self.clientsocket.getsockname() # A List
             tuplehost = str(tuple(host))
             self.clientsocket.send(("\n" + json.dumps(tuplehost)+"\n").encode('utf-8'))
-            #response = self.clientsocket.recv(1024)
-            #if response:
-            #    return True
-            #else:
-            #    print("Server not responding...")
+            response = self.clientsocket.recv(1024)
+            if response:
+                print("Got server response")
+                return True
+            else:
+                print("Server not responding...")
 
     def disconnectChat(self):
         """ Disconnecting but not closing the client, sends a shutdown message """
@@ -186,41 +193,44 @@ class Main(tk.Frame):
 
             # Change, insert into MsgOutQ?
             # Wait for confirmation?
-            self.clientsocket.send(("\n" + json.dumps(tuplehost)+"\n").encode('utf-8'))
+            #self.clientsocket.send(("\n" + json.dumps(tuplehost)+"\n").encode('utf-8'))
+            if self.closeServerConnection():
+                self.disconnectedflag = 1
+                self.gotConnection = 0
 
-            self.disconnectedflag = 1
-            self.gotConnection = 0
+                self.clientsocket.shutdown(socket.SHUT_RDWR)
 
-            self.clientsocket.shutdown(socket.SHUT_RDWR)
+                # all future operations on the socket object will fail because socket.close()
+                self.clientsocket.close()
 
-            # all future operations on the socket object will fail because socket.close()
-            self.clientsocket.close() # Releases resources
+                # Remove the old socket object
+                self.rList.remove(self.clientsocket) 
+                self.wList.remove(self.clientsocket)
 
-            # Remove the old socket object
-            self.rList.remove(self.clientsocket) 
-            self.wList.remove(self.clientsocket)
+                # Must create a new socket object
+                self.clientsocket = socket.socket()
 
-            # Must create a new socket object
-            self.clientsocket = socket.socket()
+                # Insert the new socket object
+                self.rList.append(self.clientsocket)
+                self.wList.append(self.clientsocket)
 
-            # Insert the new socket object
-            self.rList.append(self.clientsocket)
-            self.wList.append(self.clientsocket)
+                # Otherwise when we press Connect again, it tries to start a new thread, which we cannot do.
+                self.threadActive = 1
 
-            # Otherwise when we press Connect again, it tries to start a new thread, which we cannot do.
-            self.threadActive = 1
+                self.gui.textarea.config(state=tk.NORMAL)
+                self.gui.textarea.delete('1.0', tk.END)
+                self.gui.textarea.config(state=tk.DISABLED)
 
-            self.gui.textarea.config(state=tk.NORMAL)
-            self.gui.textarea.delete('1.0', tk.END)
-            self.gui.textarea.config(state=tk.DISABLED)
+                self.gui.users.config(state=tk.NORMAL)
+                self.gui.users.delete('1.0', tk.END)
+                self.gui.users.config(state=tk.DISABLED)
 
-            self.gui.users.config(state=tk.NORMAL)
-            self.gui.users.delete('1.0', tk.END)
-            self.gui.users.config(state=tk.DISABLED)
-
-            self.gui.serverpulldownmenu.entryconfig("Connect", state="normal")
-            self.gui.serverpulldownmenu.entryconfig("Disconnect", state="disabled")
-
+                self.gui.serverpulldownmenu.entryconfig("Connect", state="normal")
+                self.gui.serverpulldownmenu.entryconfig("Disconnect", state="disabled")
+            else:
+                print("Fail")
+            
+            
     def exitChat(self):
         """ Closing the client, sends a shutdown message """
 
@@ -230,13 +240,16 @@ class Main(tk.Frame):
 
             # Change, insert into MsgOutQ?
             # Wait for confirmation?
-            self.clientsocket.send(("\n" + json.dumps(tuplehost) + "\n").encode('utf-8'))
-
-            self.threadActive = 0 # Otherwise we get ValueError: select.select: file descriptor cannot be a negative integer (-1), as select.select is trying to read a socket that is closed.
-            self.clientsocket.shutdown(socket.SHUT_RDWR)
-            self.clientsocket.close()
-            self.shutdownEvent.clear() # <- Not needed
-            self.parent.destroy()
+            #self.clientsocket.send(("\n" + json.dumps(tuplehost) + "\n").encode('utf-8'))
+            if self.closeServerConnection():
+                self.threadActive = 0 # Otherwise we get ValueError: select.select: file descriptor cannot be a negative integer (-1), as select.select is trying to read a socket that is closed.
+                self.clientsocket.shutdown(socket.SHUT_RDWR)
+                self.clientsocket.close()
+                self.shutdownEvent.clear() # <- Not needed
+                self.parent.destroy()
+            else:
+                print("Fail")
+            
         else:
             #print("exitChat")
             self.shutdownEvent.clear() # <- Not needed
@@ -248,10 +261,6 @@ class Main(tk.Frame):
         if not self.msgInQ.empty():
             message = self.msgInQ.get()
             self.gui.writeToChat(message['nick'] + ": " + message['data'])
-            #self.gui.textarea.config(state=tk.NORMAL)
-            #self.gui.textarea.insert(tk.END, message['nick'] + ": " + message['data'] + "\n") ##json.loads(self.msgInQ.get().decode('utf-8'))['data'] + "\n") #
-            #self.gui.textarea.see(tk.END)
-            #self.gui.textarea.config(state=tk.DISABLED)
         self.parent.after(100, self.updateChat)
 
     def addToChat(self):
@@ -264,7 +273,7 @@ class Main(tk.Frame):
             self.msgOutQ.put(msg)
             self.gui.textbox.delete(0, tk.END)
 
-    def setNick(self):
+    def setNick(self): # What if someone already have that Nick?
         text = self.gui.textboxNickname.get()
         if text:
             self.nickname = text
@@ -306,7 +315,10 @@ class Main(tk.Frame):
             while connection is None:
                 try:
                     self.gui.writeToChat("Connecting!")
+                    # random ClientID? -> Done: clientid
                     self.clientsocket.connect((self.host, self.port))
+
+
                     self.gotConnection = 1
                     self.threadActive = 1
                     self.clientsocket.send((json.dumps(self.nickname)+"\n").encode('utf-8')) # Send Nickname
@@ -315,7 +327,11 @@ class Main(tk.Frame):
                     connection = 1
                     self.gui.serverpulldownmenu.entryconfig("Connect", state="disabled")
                     self.gui.serverpulldownmenu.entryconfig("Disconnect", state="normal")
-                    self.gui.textarea.insert(tk.END, "Connected!\n")
+                    #self.gui.textarea.insert(tk.END, "Connected!\n")
+                    self.gui.writeToChat("Connected!")
+
+
+
                 except ConnectionRefusedError:
                     self.gui.writeToChat("Connection could not be made!")
                     self.gui.serverpulldownmenu.entryconfig("Connect", state="normal")
@@ -329,7 +345,7 @@ class Main(tk.Frame):
                     self.readList, self.writeList, [] = select.select(self.rList, self.wList, [], 0) # select.select(rList, wList, [], timeout=0 -> Never blocks!)
 
                     while not self.msgOutQ.empty():
-                        message = self.msgOutQ.get()
+                        message = self.msgOutQ.get() # Check if shutdown?
                         for socket in self.writeList: # Send to all the users
                             socket.send(message.encode('utf-8'))
 

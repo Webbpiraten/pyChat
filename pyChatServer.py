@@ -3,11 +3,13 @@ import socket
 import json
 import select
 import re
+import uuid
 
 class Server:
 
 
         def __init__(self):
+                self.serverid = str(uuid.uuid4())
                 self.readList, self.writeList, self.rList, self.wList = [], [], [], []
                 self.serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.serversocket.setblocking(0)
@@ -55,8 +57,8 @@ class Server:
                                                 data = socket.recv(1024) # Need to check if any ERROR Messages have been sent! -> Add Message Type?
                                                 if data:
                                                         ## Check if a user have left.
-                                                        print("Check how the data is sent!")
-                                                        print(data)
+                                                        #print("Check how the data is sent!")
+                                                        #print(data)
 
 
                                                         connectionClosedMessage = re.search('\n(.*?)\n', data.decode('utf-8')) # separates by \n and \n, is nothing is found -> return NONE
@@ -66,6 +68,8 @@ class Server:
                                                                         #print(Dict)
                                                                         if Dict[json.loads(connectionClosedMessage.group(1))]:
                                                                                 # Send Response to the client?
+                                                                                # Remove messages to the client?
+                                                                                socket.send(data)
                                                                                 self.clientList.remove(Dict)
                                                         else:
                                                                 self.sendMsg(data, socket)
